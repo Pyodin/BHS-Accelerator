@@ -14,6 +14,23 @@ Automates the creation of a complete Azure DevOps environment for Terraform proj
 - **🚀 CI/CD Pipelines** - Multi-environment deployment with approvals and validations
 - **🛡️ Governance** - Approval workflows, exclusive locks, and required templates
 
+## Resources Created
+
+### Azure Resources
+- **Resource Groups** - Separate groups for identity and state management
+- **User-Assigned Managed Identities** - Plan and Apply identities with federated credentials
+- **Storage Account** - Terraform state backend with AVM security configuration
+- **Storage Container** - Blob container for tfstate files with private access
+
+### Azure DevOps Resources
+- **Project** - DevOps project container
+- **Git Repository** - Source code repository with automated file population
+- **Service Connections** - Workload identity federation for secure Azure access
+- **Environments** - Plan and Apply environments with approval gates
+- **Build Pipelines** - CI/CD pipelines for Terraform validation and deployment
+- **Branch Policies** - Code review requirements, merge restrictions, build validation
+- **Variable Groups** - Centralized configuration for pipeline variables
+
 
 ## Quick Start
 
@@ -48,12 +65,6 @@ terraform init && terraform apply
 | `azure_devops_personal_access_token` | PAT for DevOps access | ✅ |
 | `apply_approvers` | Production approvers | ❌ |
 | `tags` | Resource tags | ❌ |
-
-## What Gets Created
-
-- **Azure Resources**: Resource groups, storage account (with AVM), managed identities
-- **Azure DevOps**: Project, Git repository, CI/CD pipelines, service connections, environments
-- **Security**: Workload identity federation, branch policies, approval gates, exclusive locks
 
 ## Customization
 
