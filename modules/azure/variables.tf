@@ -3,18 +3,13 @@ variable "project_name" {
   type        = string
 }
 
-variable "environment" {
-  description = "The deployment environment (e.g., dev, test, prod)."
-  type        = string
-}
-
 variable "location" {
     description = "The Azure region where resources will be deployed."
     type        = string
 }
 
-variable "resource_group_identity" {
-  description = "The name of the user-assigned managed identity for the resource group."
+variable "resource_group" {
+  description = "The name of the resource group for all Azure resources."
   type        = string
 }
 
@@ -30,12 +25,6 @@ variable "federated_credentials" {
     federated_credential_name          = string
   }))
   default = {}
-}
-
-
-variable "resource_group_state" {
-  description = "The name of the resource group used for state management."
-  type        = string
 }
 
 variable "storage_account_name" {
@@ -58,13 +47,6 @@ variable "storage_account_replication_type" {
     error_message = "Storage account replication type must be one of: LRS, GRS, RAGRS, ZRS, GZRS, RAGZRS."
   }
 }
-
-variable "additional_role_assignment_principal_ids" {
-  description = "Additional principal IDs to assign roles to the storage account"
-  type        = map(string)
-  default     = {}
-}
-
 
 variable "tags" {
     description = "A map of tags to assign to resources."

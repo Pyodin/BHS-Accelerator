@@ -1,19 +1,19 @@
 ---
 parameters:
   - name: terraform_action
-    default: 'apply'
+    default: "apply"
   - name: root_module_folder_relative_path
-    default: '.'
+    default: "."
   - name: terraform_cli_version
-    default: 'latest'
+    default: "latest"
 
 stages:
   - stage: plan
     displayName: Plan
     variables:
       - group: ${variable_group_name}
-      - name: 'selfHostedAgent'
-        value: '${self_hosted_agent}'
+      - name: "selfHostedAgent"
+        value: "${self_hosted_agent}"
     jobs:
       - deployment: plan
         displayName: Plan with Terraform
@@ -32,7 +32,7 @@ stages:
                     terraformVersion: $${{ parameters.terraform_cli_version }}
                 - template: helpers/terraform-init.yaml
                   parameters:
-                    serviceConnection: '${service_connection_name_plan}'
+                    serviceConnection: "${service_connection_name_plan}"
                     backendAzureResourceGroupName: $(BACKEND_AZURE_RESOURCE_GROUP_NAME)
                     backendAzureStorageAccountName: $(BACKEND_AZURE_STORAGE_ACCOUNT_NAME)
                     backendAzureStorageAccountContainerName: $(BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME)
@@ -40,12 +40,12 @@ stages:
                 - template: helpers/terraform-plan.yaml
                   parameters:
                     terraform_action: $${{ parameters.terraform_action }}
-                    serviceConnection: '${service_connection_name_plan}'
+                    serviceConnection: "${service_connection_name_plan}"
                     root_module_folder_relative_path: $${{ parameters.root_module_folder_relative_path }}
                 - task: CopyFiles@2
                   displayName: Create Module Artifact
                   inputs:
-                    SourceFolder: '$(Build.SourcesDirectory)'
+                    SourceFolder: "$(Build.SourcesDirectory)"
                     Contents: |
                       **/*
                       !.terraform/**/*
@@ -54,15 +54,15 @@ stages:
                       !**/.terraform/**/*
                       !**/.git/**/*
                       !**/.pipelines/**/*
-                    TargetFolder: '$(Build.ArtifactsStagingDirectory)'
+                    TargetFolder: "$(Build.ArtifactsStagingDirectory)"
                     CleanTargetFolder: true
                     OverWrite: true
                 - task: PublishPipelineArtifact@1
                   displayName: Publish Module Artifact
                   inputs:
-                    targetPath: '$(Build.ArtifactsStagingDirectory)'
-                    artifact: 'module'
-                    publishLocation: 'pipeline'
+                    targetPath: "$(Build.ArtifactsStagingDirectory)"
+                    artifact: "module"
+                    publishLocation: "pipeline"
                 - pwsh: |
                     terraform `
                     -chdir="$${{ parameters.root_module_folder_relative_path }}" `
@@ -74,8 +74,8 @@ stages:
     dependsOn: plan
     variables:
       - group: ${variable_group_name}
-      - name: 'selfHostedAgent'
-        value: '${self_hosted_agent}'
+      - name: "selfHostedAgent"
+        value: "${self_hosted_agent}"
     jobs:
       - deployment: apply
         displayName: Apply with Terraform
@@ -91,15 +91,15 @@ stages:
                 - task: DownloadPipelineArtifact@2
                   displayName: Download Module Artifact
                   inputs:
-                    buildType: 'current'
-                    artifactName: 'module'
-                    targetPath: '$(Build.SourcesDirectory)'
+                    buildType: "current"
+                    artifactName: "module"
+                    targetPath: "$(Build.SourcesDirectory)"
                 - template: helpers/terraform-installer.yaml
                   parameters:
                     terraformVersion: $${{ parameters.terraform_cli_version }}
                 - template: helpers/terraform-init.yaml
                   parameters:
-                    serviceConnection: '${service_connection_name_apply}'
+                    serviceConnection: "${service_connection_name_apply}"
                     backendAzureResourceGroupName: $(BACKEND_AZURE_RESOURCE_GROUP_NAME)
                     backendAzureStorageAccountName: $(BACKEND_AZURE_STORAGE_ACCOUNT_NAME)
                     backendAzureStorageAccountContainerName: $(BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME)
@@ -107,5 +107,5 @@ stages:
                 - template: helpers/terraform-apply.yaml
                   parameters:
                     terraform_action: $${{ parameters.terraform_action }}
-                    serviceConnection: '${service_connection_name_apply}'
+                    serviceConnection: "${service_connection_name_apply}"
                     root_module_folder_relative_path: $${{ parameters.root_module_folder_relative_path }}

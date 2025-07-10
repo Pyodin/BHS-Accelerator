@@ -1,5 +1,5 @@
 resource "azuredevops_build_definition" "alz" {
-  for_each   = local.pipelines
+  for_each = local.pipelines
 
   project_id = azuredevops_project.alz.id
   name       = each.value.pipeline_name
@@ -16,21 +16,23 @@ resource "azuredevops_build_definition" "alz" {
   }
 }
 
-# resource "azuredevops_pipeline_authorization" "alz_environment" {
-#   for_each    = local.pipeline_environments_map
-#   project_id  = local.project_id
-#   resource_id = each.value.environment_id
-#   type        = "environment"
-#   pipeline_id = each.value.pipeline_id
-# }
+resource "azuredevops_pipeline_authorization" "alz_environment" {
+  for_each    = local.pipeline_environments_map
 
-# resource "azuredevops_pipeline_authorization" "alz_service_connection" {
-#   for_each    = local.pipeline_service_connections_map
-#   project_id  = local.project_id
-#   resource_id = each.value.service_connection_id
-#   type        = "endpoint"
-#   pipeline_id = each.value.pipeline_id
-# }
+  project_id  = azuredevops_project.alz.id
+  resource_id = each.value.environment_id
+  type        = "environment"
+  pipeline_id = each.value.pipeline_id
+}
+
+resource "azuredevops_pipeline_authorization" "alz_service_connection" {
+  for_each    = local.pipeline_service_connections_map
+
+  project_id  = azuredevops_project.alz.id
+  resource_id = each.value.service_connection_id
+  type        = "endpoint"
+  pipeline_id = each.value.pipeline_id
+}
 
 # resource "azuredevops_pipeline_authorization" "alz_agent_pool" {
 #   for_each    = var.use_self_hosted_agents ? local.pipelines : {}

@@ -3,11 +3,11 @@ output "organization_url" {
 }
 
 output "subjects" {
-  value = { for key, value in var.environments : key => azuredevops_serviceendpoint_azurerm.alz[key].workload_identity_federation_subject }
+  value = { for key, value in var.az_environments : key => azuredevops_serviceendpoint_azurerm.alz[key].workload_identity_federation_subject }
 }
 
 output "issuers" {
-  value = { for key, value in var.environments : key => azuredevops_serviceendpoint_azurerm.alz[key].workload_identity_federation_issuer }
+  value = { for key, value in var.az_environments : key => azuredevops_serviceendpoint_azurerm.alz[key].workload_identity_federation_issuer }
 }
 
 # output "agent_pool_name" {

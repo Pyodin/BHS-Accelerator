@@ -1,6 +1,8 @@
 ---
 trigger:
-  - none
+  branches:
+    include:
+      - ${branch_name}
 
 resources:
   repositories:
@@ -12,7 +14,7 @@ parameters:
   - name: terraform_cli_version
     displayName: Terraform CLI Version
     type: string
-    default: 'latest'
+    default: "latest"
 
 lockBehavior: sequential
 

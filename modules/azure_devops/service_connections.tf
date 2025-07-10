@@ -1,5 +1,5 @@
 resource "azuredevops_serviceendpoint_azurerm" "alz" {
-  for_each                               = var.environments
+  for_each = var.az_environments
 
   project_id                             = azuredevops_project.alz.id
   service_endpoint_name                  = each.value.service_connection_name
@@ -16,22 +16,23 @@ resource "azuredevops_serviceendpoint_azurerm" "alz" {
 }
 
 resource "azuredevops_check_approval" "alz" {
-  count                = length(var.approvers) == 0 ? 0 : 1
+  for_each = local.apply_env
 
   project_id           = azuredevops_project.alz.id
-  target_resource_id   = azuredevops_serviceendpoint_azurerm.alz[local.apply_key].id
+  target_resource_id   = azuredevops_serviceendpoint_azurerm.alz[each.key].id
   target_resource_type = "endpoint"
 
-  requester_can_approve = length(var.approvers) == 1
+  requester_can_approve = length(each.value.approvers) == 1
   approvers = [
-    azuredevops_group.alz_approvers.origin_id
+    azuredevops_group.environment_approvers[each.value.environment_key].origin_id
   ]
 
   timeout = 43200
 }
 
+# Only one stage can acquire the service connection at a time
 resource "azuredevops_check_exclusive_lock" "alz" {
-  for_each             = var.environments
+  for_each = var.az_environments
 
   project_id           = azuredevops_project.alz.id
   target_resource_id   = azuredevops_serviceendpoint_azurerm.alz[each.key].id
