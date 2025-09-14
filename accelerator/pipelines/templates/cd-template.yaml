@@ -1,0 +1,122 @@
+---
+parameters:
+  - name: terraform_action
+    default: "apply"
+  - name: root_module_folder_relative_path
+    default: "."
+  - name: terraform_cli_version
+    default: "latest"
+  - name: backendAzureStorageAccountContainerKeyName
+    type: string
+
+stages:
+  - stage: plan
+    displayName: Plan
+    variables:
+      - group: ${variable_group_name}
+      - name: "selfHostedAgent"
+        value: "${self_hosted_agent}"
+    jobs:
+      - deployment: plan
+        displayName: Plan with Terraform
+        pool: 
+          ${agent_pool_configuration}
+        environment: ${environment_name}
+        timeoutInMinutes: 0
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                  displayName: Checkout Terraform Module
+
+                - template: /.pipelines/helpers/terraform-installer.yaml
+                  parameters:
+                    terraformVersion: $${{ parameters.terraform_cli_version }}
+
+                - template: /.pipelines/helpers/terraform-init.yaml
+                  parameters:
+                    serviceConnection: "${service_connection_name}"
+                    backendAzureResourceGroupName: $(BACKEND_AZURE_RESOURCE_GROUP_NAME)
+                    backendAzureStorageAccountName: $(BACKEND_AZURE_STORAGE_ACCOUNT_NAME)
+                    backendAzureStorageAccountContainerName: $(BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME)
+                    backendAzureStorageAccountContainerKeyName: $${{ parameters.backendAzureStorageAccountContainerKeyName }}
+                    root_module_folder_relative_path: $${{ parameters.root_module_folder_relative_path }}
+                    bootstrap_subscription_id: $(BOOTSTRAP_SUBSCRIPTION_ID)
+
+                - template: /.pipelines/helpers/terraform-plan.yaml
+                  parameters:
+                    terraform_action: $${{ parameters.terraform_action }}
+                    serviceConnection: "${service_connection_name}"
+                    root_module_folder_relative_path: $${{ parameters.root_module_folder_relative_path }}
+                    target_subscription_id: $(TARGET_SUBSCRIPTION_ID)
+
+                - task: CopyFiles@2
+                  displayName: Create Module Artifact
+                  inputs:
+                    SourceFolder: "$(Build.SourcesDirectory)"
+                    Contents: |
+                      **/*
+                      !.terraform/**/*
+                      !.git/**/*
+                      !.pipelines/**/*
+                      !**/.terraform/**/*
+                      !**/.git/**/*
+                      !**/.pipelines/**/*
+                    TargetFolder: "$(Build.ArtifactsStagingDirectory)"
+                    CleanTargetFolder: true
+                    OverWrite: true
+
+                - task: PublishPipelineArtifact@1
+                  displayName: Publish Module Artifact
+                  inputs:
+                    targetPath: "$(Build.ArtifactsStagingDirectory)"
+                    artifact: "module"
+                    publishLocation: "pipeline"
+
+  - stage: apply
+    displayName: Apply
+    dependsOn: plan
+    variables:
+      - group: ${variable_group_name}
+      - name: "selfHostedAgent"
+        value: "${self_hosted_agent}"
+    jobs:
+      - deployment: apply
+        displayName: Apply with Terraform
+        pool: 
+          ${agent_pool_configuration}
+        environment: ${environment_name}
+        timeoutInMinutes: 0
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: none
+                - task: DownloadPipelineArtifact@2
+                  displayName: Download Module Artifact
+                  inputs:
+                    buildType: "current"
+                    artifactName: "module"
+                    targetPath: "$(Build.SourcesDirectory)"
+
+                - template: /.pipelines/helpers/terraform-installer.yaml
+                  parameters:
+                    terraformVersion: $${{ parameters.terraform_cli_version }}
+
+                - template: /.pipelines/helpers/terraform-init.yaml
+                  parameters:
+                    serviceConnection: "${service_connection_name}"
+                    backendAzureResourceGroupName: $(BACKEND_AZURE_RESOURCE_GROUP_NAME)
+                    backendAzureStorageAccountName: $(BACKEND_AZURE_STORAGE_ACCOUNT_NAME)
+                    backendAzureStorageAccountContainerName: $(BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME)
+                    backendAzureStorageAccountContainerKeyName: $${{ parameters.backendAzureStorageAccountContainerKeyName }}
+                    root_module_folder_relative_path: $${{ parameters.root_module_folder_relative_path }}
+                    bootstrap_subscription_id: $(BOOTSTRAP_SUBSCRIPTION_ID)
+
+                - template: /.pipelines/helpers/terraform-apply.yaml
+                  parameters:
+                    terraform_action: $${{ parameters.terraform_action }}
+                    serviceConnection: ${service_connection_name}
+                    root_module_folder_relative_path: $${{ parameters.root_module_folder_relative_path }}
+                    target_subscription_id: $(TARGET_SUBSCRIPTION_ID)

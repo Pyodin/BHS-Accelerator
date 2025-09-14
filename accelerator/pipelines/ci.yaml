@@ -1,0 +1,18 @@
+---
+trigger:
+  - none
+
+parameters:
+  - name: terraform_cli_version
+    displayName: Terraform CLI Version
+    type: string
+    default: "latest"
+
+lockBehavior: sequential
+
+extends:
+  template: ${ci_template_path}
+  parameters:
+    root_module_folder_relative_path: ${root_module_folder_relative_path}
+    terraform_cli_version: $${{ coalesce(parameters.terraform_cli_version, 'latest') }}
+    backendAzureStorageAccountContainerKeyName: $(BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_KEY_NAME${sub_project_key_suffix})
