@@ -13,7 +13,7 @@ resource "azuredevops_git_repository" "terraform" {
 resource "azuredevops_branch_policy_min_reviewers" "terraform" {
 
   depends_on = [
-    azuredevops_git_repository_file.pipeline_files,
+    azuredevops_git_repository_file.pipeline_files_branch,
     azuredevops_build_definition.ci_pipeline
   ]
 
@@ -40,7 +40,7 @@ resource "azuredevops_branch_policy_min_reviewers" "terraform" {
 resource "azuredevops_branch_policy_merge_types" "terraform" {
 
   depends_on = [
-    azuredevops_git_repository_file.pipeline_files,
+    azuredevops_git_repository_file.pipeline_files_branch,
     azuredevops_build_definition.ci_pipeline
   ]
 
@@ -64,7 +64,7 @@ resource "azuredevops_branch_policy_build_validation" "deployment_validation" {
   for_each = local.deployment_units
 
   depends_on = [
-    azuredevops_git_repository_file.pipeline_files,
+    azuredevops_git_repository_file.pipeline_files_branch,
     azuredevops_build_definition.ci_pipeline
   ]
 

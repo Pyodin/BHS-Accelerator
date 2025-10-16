@@ -2,18 +2,11 @@ locals {
   # Organization URL formatting
   organization_url = startswith(lower(var.organization_name), "https://") || startswith(lower(var.organization_name), "http://") ? var.organization_name : "https://dev.azure.com/${var.organization_name}"
 
+  project_name_sanitized = lower(replace(replace(var.project_name, " ", ""), "/[^a-zA-Z0-9-]/", "-"))
+
   # Default branch reference
   default_branch = "refs/heads/main"
 
-  # Common configuration for pipeline modules
-  common_pipeline_config = {
-    azure_tenant_id                              = var.azure_tenant_id
-    azure_subscription_id                        = var.azure_subscription_id
-    azure_subscription_name                      = var.azure_subscription_name
-    backend_azure_resource_group_name            = var.backend_azure_resource_group_name
-    backend_azure_storage_account_name           = var.backend_azure_storage_account_name
-    backend_azure_storage_account_container_name = var.backend_azure_storage_account_container_name
-  }
 
   # Read providers.tf template
   providers_template_content = file("${path.module}/templates/providers.tf")

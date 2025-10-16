@@ -21,18 +21,7 @@ variable "project_name" {
   type        = string
 }
 
-variable "environments" {
-  description = "Configuration for environments with approvers"
-  type = map(object({
-    approvers                        = list(string)
-    root_module_folder_relative_path = string
-    subscription_id                  = string
-  }))
-  validation {
-    condition     = length(var.environments) > 0
-    error_message = "At least one environment must be specified."
-  }
-}
+
 
 variable "sub_projects" {
   description = "List of sub-projects that will be created under each environment (e.g., network, compute, storage)"
@@ -82,6 +71,10 @@ variable "apply_branch_policy" {
   type        = bool
 }
 
+
+
+
+
 variable "service_connection_type" {
   description = "Type of authentication for Azure service connections. 'managed_identity' uses Workload Identity Federation (recommended), 'app_registration' uses traditional service principal with secrets."
   type        = string
@@ -90,6 +83,20 @@ variable "service_connection_type" {
     condition     = contains(["managed_identity", "app_registration"], var.service_connection_type)
     error_message = "service_connection_type must be either 'managed_identity' or 'app_registration'."
   }
+}
+
+variable "import_existing_spn" {
+  description = "Whether to import existing service principals (only applicable when service_connection_type is 'app_registration')"
+  type        = bool
+  default     = false
+}
+
+variable "existing_service_principals" {
+  description = "Existing service principals configuration for workload identity federation (when import_existing_spn is true)"
+  type = map(object({
+    display_name = string # Application Display Name
+  }))
+  default = {}
 }
 
 variable "min_approvers" {

@@ -17,7 +17,7 @@ resource "azuredevops_serviceendpoint_azurerm" "service_connection_managed_ident
   azurerm_spn_tenantid      = var.azure_tenant_id
   azurerm_subscription_id   = each.value.subscription_id
   azurerm_subscription_name = "Subscription-${each.key}"
-  
+
 }
 
 # Service connections using Workload Identity Federation (App Registration)
@@ -28,11 +28,16 @@ resource "azuredevops_serviceendpoint_azurerm" "service_connection_app_registrat
   service_endpoint_name                  = local.service_connections[each.key].name
   service_endpoint_authentication_scheme = "WorkloadIdentityFederation"
 
+  # Use SPN client ID when using app registration
+  credentials {
+    serviceprincipalid = var.service_principal_client_ids[each.key]
+  }
+
   azurerm_spn_tenantid      = var.azure_tenant_id
   azurerm_subscription_id   = each.value.subscription_id
   azurerm_subscription_name = "Subscription-${each.key}"
 
-  description = "Service connection for ${each.key} environment using App Registration with Workload Identity Federation. Please configure the App Registration and federated credentials manually in Azure AD."
+  description = "Service connection for ${each.key} environment using SPN (${var.service_principal_client_ids[each.key]}) with Workload Identity Federation"
 }
 
 # Local reference to service connections regardless of type

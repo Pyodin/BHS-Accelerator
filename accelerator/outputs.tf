@@ -7,17 +7,6 @@ output "deployment_summary" {
   value = {
     message = "🎉 Accelerator deployment completed successfully!"
 
-    azure_subscription = {
-      id   = data.azurerm_client_config.current.subscription_id
-      name = data.azurerm_subscription.current.display_name
-    }
-
-    terraform_backend = {
-      resource_group_name  = local.resource_names.resource_group_name
-      storage_account_name = local.resource_names.storage_account_state
-      container_name       = local.resource_names.storage_account_state_container
-    }
-
     azure_devops = {
       organization_url     = module.azure_devops.organization_url
       project_name         = var.project_name
@@ -31,13 +20,4 @@ output "deployment_summary" {
       "2. Start developing your infrastructure!"
     ]
   }
-}
-
-# ==============================================================================
-# MANAGED IDENTITIES OUTPUTS
-# ==============================================================================
-
-output "managed_identity_client_ids" {
-  description = "Client IDs of all managed identities by environment and operation type"
-  value       = module.azure.user_assigned_managed_identity_client_ids
 }

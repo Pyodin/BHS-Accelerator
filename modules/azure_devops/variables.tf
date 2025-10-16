@@ -34,6 +34,14 @@ variable "service_connection_type" {
   }
 }
 
+
+
+variable "service_principal_client_ids" {
+  description = "Service principal client IDs (from either created or imported service principals when using app_registration auth)"
+  type        = map(string)
+  default     = {}
+}
+
 # ==============================================================================
 # ENVIRONMENT CONFIGURATION VARIABLES
 # ==============================================================================
@@ -67,29 +75,19 @@ variable "azure_tenant_id" {
   type        = string
 }
 
-variable "azure_subscription_id" {
-  description = "Azure subscription ID for backend resources"
-  type        = string
-}
-
-variable "azure_subscription_name" {
-  description = "Azure subscription name for backend resources"
-  type        = string
-}
-
-variable "backend_azure_resource_group_name" {
-  description = "Azure Resource Group for terraform backend"
-  type        = string
-}
-
-variable "backend_azure_storage_account_name" {
-  description = "Azure Storage Account for terraform backend"
-  type        = string
-}
-
-variable "backend_azure_storage_account_container_name" {
-  description = "Azure Storage Account Container for terraform backend"
-  type        = string
+variable "environment_resources" {
+  description = "Environment-specific resource configuration including backends"
+  type = map(object({
+    resource_group_name                          = string
+    storage_account_name                         = string
+    storage_account_state_container              = string
+    container_registry_name                      = string
+    managed_identity_name                        = string
+    federated_credential_name                    = string
+    subscription_id                              = string
+    backend_azure_storage_account_name           = string
+    backend_azure_storage_account_container_name = string
+  }))
 }
 
 # ==============================================================================
@@ -139,3 +137,7 @@ variable "self_hosted_agent_pool_name" {
   type        = string
   default     = "Default"
 }
+
+
+
+

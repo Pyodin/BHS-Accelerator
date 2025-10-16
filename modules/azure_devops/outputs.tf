@@ -31,16 +31,16 @@ output "repository" {
 
 output "subjects" {
   description = "OIDC subjects for workload identity federation, per environment"
-  value = var.service_connection_type == "managed_identity" ? {
-    for k, v in azuredevops_serviceendpoint_azurerm.service_connection_managed_identity : k => v.workload_identity_federation_subject
-  } : {}
+  value = {
+    for k, v in local.service_connections_ref : k => v.workload_identity_federation_subject
+  }
 }
 
 output "issuers" {
   description = "OIDC issuers for workload identity federation, per environment"
-  value = var.service_connection_type == "managed_identity" ? {
-    for k, v in azuredevops_serviceendpoint_azurerm.service_connection_managed_identity : k => v.workload_identity_federation_issuer
-  } : {}
+  value = {
+    for k, v in local.service_connections_ref : k => v.workload_identity_federation_issuer
+  }
 }
 
 # ==============================================================================
@@ -111,7 +111,7 @@ output "approvers_groups" {
 output "pipeline_files" {
   description = "Pipeline files that were created in the repository"
   value = {
-    for key, file in azuredevops_git_repository_file.pipeline_files : key => {
+    for key, file in azuredevops_git_repository_file.pipeline_files_branch : key => {
       file_path = file.file
       content   = file.content
     }

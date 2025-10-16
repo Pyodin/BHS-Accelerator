@@ -2,13 +2,6 @@ locals {
   # Sanitized project name for Azure resources (removes spaces and invalid characters)
   project_name_sanitized = lower(replace(replace(var.project_name, " ", ""), "/[^a-zA-Z0-9-]/", "-"))
 
-  # Azure configuration
-  azure_config = {
-    tenant_id         = data.azurerm_client_config.current.tenant_id
-    subscription_id   = data.azurerm_client_config.current.subscription_id
-    subscription_name = data.azurerm_subscription.current.display_name
-  }
-
   organization_url = startswith(lower(var.azure_devops_organization_name), "https://") || startswith(lower(var.azure_devops_organization_name), "http://") ? var.azure_devops_organization_name : "https://dev.azure.com/${var.azure_devops_organization_name}"
 
   # Pipeline configuration
@@ -29,64 +22,43 @@ locals {
   }
 
 
-  # ==============================================================================
-  # RESOURCE NAMING - Global resource names
-  # ==============================================================================
-
-  resource_names = {
-    resource_group_name             = "rg-${local.project_name_sanitized}-devops"
-    storage_account_state           = module.naming.storage_account.name_unique
-    storage_account_state_container = "tfstate"
-    azure_devops_repository         = "tf-${local.project_name_sanitized}"
-    container_registry              = module.naming.container_registry.name_unique
-  }
-
-  # Backend configuration
-  backend_config = {
-    resource_group_name  = local.resource_names.resource_group_name
-    storage_account_name = local.resource_names.storage_account_state
-    container_name       = local.resource_names.storage_account_state_container
-  }
+  # Azure DevOps repository name
+  azure_devops_repository = "tf-${local.project_name_sanitized}"
 
   # ==============================================================================
-  # ENVIRONMENT-SPECIFIC CONFIGURATION
+  # ENVIRONMENT-SPECIFIC CONFIGURATION  
   # ==============================================================================
 
-  # Environments with resource names (references computed separately to avoid cycles)
-  environments = {
-    for env_name, env_config in var.environments : env_name => {
-      # Original configuration
-      approvers                        = env_config.approvers
-      root_module_folder_relative_path = env_config.root_module_folder_relative_path
-      subscription_id                  = env_config.subscription_id
-
-      # Computed resource names specific to this environment
-      managed_identity_name     = "uai-${local.project_name_sanitized}-${env_name}"
-      federated_credential_name = "fc-${local.project_name_sanitized}-${env_name}"
+  # Centralized environment resources configuration (replaces azure/locals.tf logic)
+  environment_resources = {
+    for env_name, env_config in local.environments : env_name => {
+      # Resource naming (moved from azure module)
+      resource_group_name             = "rg-${local.project_name_sanitized}-devops-${env_name}"
+      storage_account_name            = "st${replace("${local.project_name_sanitized}terraform${env_name}", "-", "")}"
+      storage_account_state_container = "tfstate"
+      container_registry_name         = "acr${local.project_name_sanitized}${env_name}"
+      managed_identity_name           = "uai-${local.project_name_sanitized}-${env_name}"
+      federated_credential_name       = "fc-${local.project_name_sanitized}-${env_name}"
+      service_principal_display_name  = "spn-${local.project_name_sanitized}-${env_name}"
+      
+      # Backend configuration
+      backend_azure_storage_account_name           = replace("${local.project_name_sanitized}${env_name}", "-", "")
+      backend_azure_storage_account_container_name = "tfstate"
+      
+      # Environment metadata
+      subscription_id = env_config.subscription_id
     }
   }
 
-  # Simplified managed identities configuration for azure module
-  managed_identities = {
-    for env_name, env_config in var.environments :
-    env_name => local.environments[env_name].managed_identity_name
-  }
-
-  # Simplified federated credentials configuration (computed after modules)
-  federated_credentials = var.service_connection_type == "managed_identity" ? {
-    for env_name, env_config in var.environments :
-    env_name => {
-      user_assigned_managed_identity_key = env_name
-      federated_credential_subject       = module.azure_devops.subjects[env_name]
-      federated_credential_issuer        = module.azure_devops.issuers[env_name]
-      federated_credential_name          = local.environments[env_name].federated_credential_name
+  # Federated credentials configuration (computed after Azure DevOps module)
+  # Configure federated credentials when:
+  # - Creating managed identity (service_connection_type == "managed_identity")
+  # - Using app registration (service_connection_type == "app_registration") - both importing existing and creating new
+  federated_credentials = (var.service_connection_type == "managed_identity" || var.service_connection_type == "app_registration") ? {
+    for env_name in keys(local.environments) : env_name => {
+      subject = module.azure_devops.subjects[env_name]
+      issuer  = module.azure_devops.issuers[env_name]
     }
-  } : {}
-
-  # Legacy compatibility - managed identity client IDs by environment (computed after modules)
-  managed_identity_client_ids_by_environment = var.service_connection_type == "managed_identity" ? {
-    for env_name, env_config in var.environments :
-    env_name => module.azure.user_assigned_managed_identity_client_ids[env_name]
   } : {}
 
   # ==============================================================================
@@ -102,3 +74,4 @@ locals {
     var.tags
   )
 }
+

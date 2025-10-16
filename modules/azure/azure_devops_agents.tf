@@ -8,11 +8,15 @@ resource "random_string" "name" {
 module "avm-ptn-cicd-agents-and-runners" {
   source  = "Azure/avm-ptn-cicd-agents-and-runners/azurerm"
   version = "0.4.1"
+  
+  providers = {
+    azurerm = azurerm.target
+  }
 
   count = var.create_self_hosted_agents ? 1 : 0
 
   location                        = var.location
-  resource_group_name             = var.resource_group_name
+  resource_group_name             = var.environment_resources.resource_group_name
   resource_group_creation_enabled = false
   postfix                         = random_string.name.result
 

@@ -67,10 +67,10 @@ stages:
                     backendAzureStorageAccountContainerName: $(BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME)
                     backendAzureStorageAccountContainerKeyName: $${{ parameters.backendAzureStorageAccountContainerKeyName }}
                     root_module_folder_relative_path: $${{ parameters.root_module_folder_relative_path }}
-                    bootstrap_subscription_id: $(BOOTSTRAP_SUBSCRIPTION_ID)
 
                 - template: /.pipelines/helpers/terraform-plan.yaml
                   parameters:
                     serviceConnection: ${service_connection_name}
                     root_module_folder_relative_path: $${{ parameters.root_module_folder_relative_path }}
                     target_subscription_id: $(TARGET_SUBSCRIPTION_ID)
+

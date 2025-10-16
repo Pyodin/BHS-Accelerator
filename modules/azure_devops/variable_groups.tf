@@ -11,20 +11,20 @@ resource "azuredevops_variable_group" "pipeline" {
   description  = "Variable group for ${each.key} environment pipelines"
   allow_access = true
 
-  # Backend configuration variables
+  # Backend configuration variables (environment-specific)
   variable {
     name  = "BACKEND_AZURE_RESOURCE_GROUP_NAME"
-    value = var.backend_azure_resource_group_name
+    value = var.environment_resources[each.key].resource_group_name
   }
 
   variable {
     name  = "BACKEND_AZURE_STORAGE_ACCOUNT_NAME"
-    value = var.backend_azure_storage_account_name
+    value = var.environment_resources[each.key].backend_azure_storage_account_name
   }
 
   variable {
     name  = "BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME"
-    value = var.backend_azure_storage_account_container_name
+    value = var.environment_resources[each.key].backend_azure_storage_account_container_name
   }
 
   # Sub-project specific backend keys (only when sub-projects are defined)
@@ -40,10 +40,5 @@ resource "azuredevops_variable_group" "pipeline" {
   variable {
     name  = "TARGET_SUBSCRIPTION_ID"
     value = each.value.subscription_id
-  }
-
-  variable {
-    name  = "BOOTSTRAP_SUBSCRIPTION_ID"
-    value = var.azure_subscription_id
   }
 }

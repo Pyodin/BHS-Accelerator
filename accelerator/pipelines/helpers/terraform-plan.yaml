@@ -1,10 +1,10 @@
 ---
 parameters:
   - name: terraform_action
-    default: "apply"
+    default: 'apply'
   - name: serviceConnection
   - name: root_module_folder_relative_path
-    default: "."
+    default: '.'
   - name: target_subscription_id
 
 steps:
@@ -14,37 +14,33 @@ steps:
       azureSubscription: ${{ parameters.serviceConnection }}
       scriptType: bash
       scriptLocation: inlineScript
-      addSpnToEnvironment: true
       inlineScript: |
         set -e
 
-        # Get settings from service connection
-        ACCOUNT=$(az account show 2>/dev/null)
-        CLIENT_ID=$(echo $ACCOUNT | jq -r '.user.name')
-        OIDC_TOKEN=$idToken # requires addSpnToEnvironment: true
-        SUBSCRIPTION_ID=$(echo $ACCOUNT | jq -r '.id')
-        TENANT_ID=$(echo $ACCOUNT | jq -r '.tenantId')
+        # Logout of Azure CLI to prove we are not using that auth method
+        az logout
 
-        export ARM_TENANT_ID=$TENANT_ID
+        # Export ARM variables using Azure DevOps built-in environment variables  
+        export ARM_TENANT_ID=$AZURESUBSCRIPTION_TENANT_ID
         export ARM_SUBSCRIPTION_ID="${{ parameters.target_subscription_id }}"
-        export ARM_OIDC_TOKEN=$OIDC_TOKEN
+        export ARM_CLIENT_ID=$AZURESUBSCRIPTION_CLIENT_ID
+        export ARM_OIDC_AZURE_SERVICE_CONNECTION_ID=$AZURESUBSCRIPTION_SERVICE_CONNECTION_ID
         export ARM_USE_OIDC="true"
-        export ARM_CLIENT_ID=$CLIENT_ID
-        export ARM_USE_AZUREAD="true"
 
-        # Run Terraform Plan
-        TERRAFORM_ARGS=("-chdir=${{ parameters.root_module_folder_relative_path }}" "plan" "-out=tfplan" "-input=false")
+        # Build terraform command arguments
+        terraform_args=()
+        terraform_args+=("-chdir=${{ parameters.root_module_folder_relative_path }}")
+        terraform_args+=("plan")
+        terraform_args+=("-out=tfplan")
+        terraform_args+=("-input=false")
 
         if [ "$TERRAFORM_ACTION" = "destroy" ]; then
-          TERRAFORM_ARGS+=("-destroy")
+          terraform_args+=("-destroy")
         fi
 
-        echo "Running: terraform ${TERRAFORM_ARGS[@]}"
-        terraform "${TERRAFORM_ARGS[@]}"
-        
-        # Show the plan for review
-        echo "=== Terraform Plan Output ==="
-        terraform -chdir="${{ parameters.root_module_folder_relative_path }}" show tfplan
+        echo "Running: terraform ${terraform_args[@]}"
+        terraform "${terraform_args[@]}"
 
     env:
       TERRAFORM_ACTION: ${{ coalesce(parameters.terraform_action, 'apply') }}
+      ARM_OIDC_REQUEST_TOKEN: $(System.AccessToken)

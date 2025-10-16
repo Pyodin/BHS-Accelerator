@@ -25,7 +25,7 @@ resource "azuredevops_build_definition" "ci_pipeline" {
   variable_groups = [azuredevops_variable_group.pipeline[each.value.env_name].id]
 
   depends_on = [
-    azuredevops_git_repository_file.pipeline_files,
+    azuredevops_git_repository_file.pipeline_files_branch,
     azuredevops_environment.environment,
     azuredevops_serviceendpoint_azurerm.service_connection_managed_identity,
     azuredevops_serviceendpoint_azurerm.service_connection_app_registration
@@ -55,7 +55,7 @@ resource "azuredevops_build_definition" "cd_pipeline" {
   variable_groups = [azuredevops_variable_group.pipeline[each.value.env_name].id]
 
   depends_on = [
-    azuredevops_git_repository_file.pipeline_files,
+    azuredevops_git_repository_file.pipeline_files_branch,
     azuredevops_environment.environment,
     azuredevops_serviceendpoint_azurerm.service_connection_managed_identity,
     azuredevops_serviceendpoint_azurerm.service_connection_app_registration

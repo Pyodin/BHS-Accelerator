@@ -8,41 +8,64 @@ variable "location" {
   type        = string
 }
 
-variable "resource_group_name" {
-  description = "The name of the resource group."
+variable "environment_name" {
+  description = "The name of the environment (e.g., dev, prod, staging)."
   type        = string
 }
 
-variable "user_assigned_managed_identities" {
-  type = map(string)
+variable "environment_resources" {
+  description = "Centralized environment resource configuration"
+  type = object({
+    resource_group_name                          = string
+    storage_account_name                         = string
+    storage_account_state_container              = string
+    container_registry_name                      = string
+    managed_identity_name                        = string
+    federated_credential_name                    = string
+    service_principal_display_name               = string
+    backend_azure_storage_account_name           = string
+    backend_azure_storage_account_container_name = string
+    subscription_id                              = string
+  })
 }
+
+# ==============================================================================
+# AUTHENTICATION CONFIGURATION
+# ==============================================================================
+
+# Managed Identity Configuration
+variable "create_managed_identity" {
+  description = "Whether to create a managed identity for this environment"
+  type        = bool
+  default     = false
+}
+
+# Service Principal Configuration
+variable "create_service_principal" {
+  description = "Whether to create a new service principal (app registration) for this environment"
+  type        = bool
+  default     = false
+}
+
+variable "import_existing_spn" {
+  description = "Whether to import existing service principals"
+  type        = bool
+  default     = false
+}
+
+# Managed identity and federated credential names are computed in locals.tf
 
 variable "federated_credentials" {
-  type = map(object({
-    user_assigned_managed_identity_key = string
-    federated_credential_subject       = string
-    federated_credential_issuer        = string
-    federated_credential_name          = string
-  }))
-  default = {}
+  description = "Federated credentials to create for this environment's managed identity"
+  type = object({
+    subject = string
+    issuer  = string
+  })
+  default = null
 }
 
 
-variable "storage_account_name" {
-  description = "The name of the Azure Storage Account used for backend state."
-  type        = string
-}
-
-variable "storage_account_state_container" {
-  description = "The name of the Azure Storage Account container used for backend state."
-  type        = string
-}
-
-variable "container_registry_name" {
-  description = "The name of the Azure Container Registry for storing agent images."
-  type        = string
-  default     = ""
-}
+# Storage account and container registry names are computed in locals.tf
 
 variable "storage_account_replication_type" {
   description = "The replication type for the storage account"
@@ -59,6 +82,16 @@ variable "tags" {
   description = "A map of tags to assign to resources."
   type        = map(string)
   default     = {}
+}
+
+# ==============================================================================
+# SERVICE PRINCIPAL CONFIGURATION
+# ==============================================================================
+
+variable "existing_spn_display_name" {
+  description = "Display name of the existing service principal to import (when import_existing_spn is true)"
+  type        = string
+  default     = ""
 }
 
 # ==============================================================================
